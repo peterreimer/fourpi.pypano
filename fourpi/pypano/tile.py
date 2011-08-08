@@ -10,18 +10,10 @@ import tempfile
 import os
 import math
 import subprocess
-import logging
+import shutil
 from optparse import OptionParser
 from deepzoom import ImageCreator
 
-"""
-logger = logging.getLogger('pano')
-hdlr = logging.FileHandler('pano.log')
-formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-hdlr.setFormatter(formatter)
-logger.addHandler(hdlr)
-logger.setLevel(logging.INFO)
-"""
 PI = math.pi
 STITCHER = "nona"
 DEFAULT_TILESIZE = 512
@@ -41,15 +33,17 @@ class Panorama:
         self.width, self.height = self.image.size
         self.cubesize, self.tilesize = self._get_cubesize(self.width)
 
-    def _get_default_facewidth(self, opt):
-        print opt
+    def _get_default_facewidth(self, optcubesize):
+        """ calculate a default cubic face and tile size based on exponents of 2
+            if we can not find one between MINIMUM_TILESIZE and MAXIMUM_TILESIZE
+        """
+        
         level = 0
-        while 2**level < opt:
+        while 2**level < optcubesize:
             level = level + 1
             facesize = 2**(level-1)
             if facesize <= DEFAULT_TILESIZE:
                 tilesize = facesize
-        print facesize, tilesize
         return facesize, tilesize
                 
     def _get_cubesize(self, panowidth):
@@ -62,7 +56,6 @@ class Panorama:
         scaling = 1
         msg = "opt cube %s" % (optcubesize)
         print msg
-        #logger.info(msg)
         # calculate all possible tile sizes
         for zoomlevel in range(zoomlevels):
             tilewidth = optcubesize / 2**zoomlevel
@@ -124,7 +117,8 @@ class Panorama:
         
                 
     def _make_cubic(self):
-        
+        """ extract the six faces of a cube
+        """
         faces = (
             (   0,  0,0,90, "f"), #front
             (  90,  0,0,90, "l"), #left
@@ -139,7 +133,6 @@ class Panorama:
         for yaw, pitch, roll, fov, pos in faces:
             name = '_'.join((os.path.splitext(self.filename)[0], pos))
             face = self.extract(yaw, pitch, roll, fov, dest, name)
-            logger.info("Extract face %s" % name)
             facefiles.append(face)
                          
         return facefiles
@@ -147,6 +140,7 @@ class Panorama:
     def salado(self):
         faces = self._make_cubic()
         
+        pyramids = []
         for face in faces:
             base = os.path.splitext(face)[0]
             dest = base + ".dzi"
@@ -158,7 +152,24 @@ class Panorama:
             #logger.info(msg)
             os.rename(dest, xml)
             os.rename(base + "_files", base) # TODO: check if dest folder exist
+            pyramids.append(base)
             os.remove(face)
+        self.salado_clean(pyramids)
+    
+    def salado_clean(self, pyramids):
+        
+        for pyramid in pyramids:
+            levels = {}
+            for root, dirs, files in os.walk(pyramid):
+                if root is not pyramid:
+                    level = int(os.path.split(root)[-1])
+                    levels[level] = len(files) 
+            for level in range(len(levels) - 1):
+                level_dir = "/".join((pyramid,str(level))) 
+                if not levels[level + 1] > 1 and os.path.isdir(level_dir):
+                    shutil.rmtree(level_dir)
+                    print "delete " + level_dir
+        
             
             
 
@@ -199,6 +210,10 @@ def main():
     pano = Panorama(args[0])
     #pano.extract(0, -25, -15, 75, None, 'zenit')
     #pano._make_cubic()
+    print "size: ", pano.width, "x", pano.height 
+    print "cube: ", pano.cubesize
+    print "tile", pano.tilesize
+    
     pano.salado()
     
     

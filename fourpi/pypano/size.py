@@ -1,6 +1,14 @@
 #!/usr/bin/env python
-
+import logging
 import tile
+
+logger = logging.getLogger('pano')
+hdlr = logging.FileHandler('pano.log')
+formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+hdlr.setFormatter(formatter)
+logger.addHandler(hdlr)
+logger.setLevel(logging.INFO)
+
 
 pano = tile.Panorama('/home/reimer/tmp/dzi/laschozas.jpg')
 
