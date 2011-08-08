@@ -23,8 +23,9 @@ logger.setLevel(logging.INFO)
 
 PI = math.pi
 STITCHER = "nona"
-MINIMUM_TILE_SIZE = 400
-MAXIMUM_TILE_SIZE = 600
+DEFAULT_TILESIZE = 512
+MINIMUM_TILESIZE = 400
+MAXIMUM_TILESIZE = 600
 SCRIPT = """p f0 w%(size)s h%(size)s v%(fov)s u10  n"PNG"\n
 i f4 w%(width)s h%(height)s y%(yaw)s p%(pitch)s r%(roll)s v%(hfov)s n"%(input)s" """
 
@@ -37,48 +38,49 @@ class Panorama:
         self.filename = os.path.split(self.src)[1]
         self.hfov = hfov
         self.width, self.height = self.image.size
+        self.cubesize, self.tilesize = self._get_cubesize(self.width)
 
-    def get_max_facewidth(self, zoomlevels, opt):
-        
-        liste = {}
-        for zoomlevel in range(zoomlevels):
-            minfacewidth = MINIMUM_TILE_SIZE * 2**zoomlevel
-            if minfacewidth < opt:
-                diff = abs(minfacewidth - opt)
-                liste[diff] = (minfacewidth, MINIMUM_TILE_SIZE)
-            maxfacewidth = MAXIMUM_TILE_SIZE * 2**zoomlevel
-            if maxfacewidth < opt:
-                diff = abs(maxfacewidth - opt)
-                liste[diff] = (maxfacewidth, MAXIMUM_TILE_SIZE)
-    
-        return liste[min(liste.keys())]
-    
-    def _get_size(self, hfov, fov):
-        opt = hfov / math.pi
-        zoomlevels = int(opt / MINIMUM_TILE_SIZE) + 1
+    def _get_default_facewidth(self, opt):
+        print opt
+        level = 0
+        while 2**level < opt:
+            level = level + 1
+            facesize = 2**(level-1)
+            if facesize <= DEFAULT_TILESIZE:
+                tilesize = facesize
+        print facesize, tilesize
+        return facesize, tilesize
+                
+    def _get_cubesize(self, panowidth):
+        rawcubesize = panowidth / math.pi
+        zoomlevels = int(rawcubesize / MINIMUM_TILESIZE) + 1
         divider = 2**zoomlevels
-        tilenumber = (opt - opt % divider) / divider
-        optfacesize = tilenumber * divider
+        tilenumber = (rawcubesize - rawcubesize % divider) / divider
+        optcubesize = tilenumber * divider
         tilesize = 0
         scaling = 1
+        logger.info("opt cube %s" % (optcubesize))
         # calculate all possible tile sizes
         for zoomlevel in range(zoomlevels):
-            tilewidth = optfacesize / 2**zoomlevel
+            tilewidth = optcubesize / 2**zoomlevel
             #print zoomlevel, facesize, tilewidth
-            if MINIMUM_TILE_SIZE <= tilewidth and tilewidth <= MAXIMUM_TILE_SIZE:
+            if MINIMUM_TILESIZE <= tilewidth and tilewidth <= MAXIMUM_TILESIZE:
                 tilesize = tilewidth
-                facesize = optfacesize
+                facesize = optcubesize
         if tilesize == 0:
-            facesize, tilesize = self.get_max_facewidth(zoomlevels, opt)
-            scaling = facesize / float(optfacesize)
+            facesize, tilesize = self._get_default_facewidth(optcubesize)
+
+        scaling = facesize / float(rawcubesize)
+        logger.info("Scaling down %s" % (scaling))
+        logger.info("Cube / tile size %s/%s" % (facesize,tilesize))
         return facesize, tilesize
     
     def _make_script(self, yaw, pitch, roll, fov):
         
         tmp_fd, tmp_name = tempfile.mkstemp(".txt", STITCHER)           
         
-        #size, tile = self._get_size(self.hfov, fov)
-        size = 512
+        #size, tile = self._get_size(self.width, fov)
+        
         input_parameter = {
             'input':_expand(self.src),
             'width':self.width,
@@ -88,7 +90,7 @@ class Panorama:
             'roll':roll,
             'fov':fov,
             'hfov':self.hfov,
-            'size': size 
+            'size': self.cubesize 
             }
         
         script = os.fdopen(tmp_fd,"w")
@@ -147,11 +149,11 @@ class Panorama:
             base = os.path.splitext(face)[0]
             dest = base + ".dzi"
             xml = base + ".xml"
-            creator = ImageCreator()
+            creator = ImageCreator(tile_size=self.tilesize)
             creator.create(face, dest)
             logger.info("Created Pyramid for %s" % face)
             os.rename(dest, xml)
-            os.rename(base + "_files", base)
+            os.rename(base + "_files", base) # TODO: check if dest folder exist
             os.remove(face)
             
             
