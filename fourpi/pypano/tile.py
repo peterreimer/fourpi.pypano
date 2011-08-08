@@ -14,13 +14,14 @@ import logging
 from optparse import OptionParser
 from deepzoom import ImageCreator
 
+"""
 logger = logging.getLogger('pano')
 hdlr = logging.FileHandler('pano.log')
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 hdlr.setFormatter(formatter)
 logger.addHandler(hdlr)
 logger.setLevel(logging.INFO)
-
+"""
 PI = math.pi
 STITCHER = "nona"
 DEFAULT_TILESIZE = 512
@@ -59,7 +60,9 @@ class Panorama:
         optcubesize = tilenumber * divider
         tilesize = 0
         scaling = 1
-        logger.info("opt cube %s" % (optcubesize))
+        msg = "opt cube %s" % (optcubesize)
+        print msg
+        #logger.info(msg)
         # calculate all possible tile sizes
         for zoomlevel in range(zoomlevels):
             tilewidth = optcubesize / 2**zoomlevel
@@ -71,15 +74,15 @@ class Panorama:
             facesize, tilesize = self._get_default_facewidth(optcubesize)
 
         scaling = facesize / float(rawcubesize)
-        logger.info("Scaling down %s" % (scaling))
-        logger.info("Cube / tile size %s/%s" % (facesize,tilesize))
+        msg = "Cube %s | tile %s | scaling %s" % (facesize, tilesize, scaling)
+        print msg
+        #logger.info(msg)
+        
         return facesize, tilesize
     
     def _make_script(self, yaw, pitch, roll, fov):
         
         tmp_fd, tmp_name = tempfile.mkstemp(".txt", STITCHER)           
-        
-        #size, tile = self._get_size(self.width, fov)
         
         input_parameter = {
             'input':_expand(self.src),
@@ -95,7 +98,7 @@ class Panorama:
         
         script = os.fdopen(tmp_fd,"w")
         script.writelines(SCRIPT % input_parameter)
-        # logger.info("Create script at %s" % tmp_name)
+        print "Create script at %s" % tmp_name
         return tmp_name
         
     def extract(self, yaw, pitch, roll, fov, dest, name):
@@ -110,7 +113,6 @@ class Panorama:
         nona = subprocess.Popen(args, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         nona.communicate()
         os.remove(script)
-        # logger.info("Remove script %s" % script)
         result = _expand(outfile + '.png')
         
         if os.path.isfile(result):
@@ -151,7 +153,9 @@ class Panorama:
             xml = base + ".xml"
             creator = ImageCreator(tile_size=self.tilesize)
             creator.create(face, dest)
-            logger.info("Created Pyramid for %s" % face)
+            msg = "Created Pyramid for %s" % face
+            print msg
+            #logger.info(msg)
             os.rename(dest, xml)
             os.rename(base + "_files", base) # TODO: check if dest folder exist
             os.remove(face)
