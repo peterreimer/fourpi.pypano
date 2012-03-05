@@ -28,7 +28,9 @@ setup(name='fourpi.pypano',
           'setuptools',
           # -*- Extra requirements: -*-
       ],
-      entry_points="""
-      # -*- Entry points: -*-
-      """,
+      entry_points={
+          'console_scripts':[
+            'tile=fourpi.pypano.tile:main',
+          ]  
+      },
       )

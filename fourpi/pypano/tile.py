@@ -11,6 +11,8 @@ import os
 import math
 import subprocess
 import shutil
+import xml.dom.minidom
+
 from optparse import OptionParser
 from deepzoom import ImageCreator
 
@@ -99,13 +101,14 @@ class Panorama:
         if not dest:
             dest = _expand(os.path.dirname(self.src))
         
-        
         outfile = os.path.join(dest,name)
+        
         script = self._make_script(yaw, pitch, roll, fov)
         args = (STITCHER,'-o', outfile, script)
         nona = subprocess.Popen(args, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         nona.communicate()
         os.remove(script)
+        
         result = _expand(outfile + '.png')
         
         if os.path.isfile(result):
@@ -145,19 +148,29 @@ class Panorama:
             base = os.path.splitext(face)[0]
             dest = base + ".dzi"
             xml = base + ".xml"
-            creator = ImageCreator(tile_size=self.tilesize)
+            tilesdir = base + "_files"
+            creator = ImageCreator(tile_size=self.tilesize, tile_format="jpg",
+                                   image_quality=0.80, resize_filter=None)
             creator.create(face, dest)
             msg = "Created Pyramid for %s" % face
             print msg
             #logger.info(msg)
-            os.rename(dest, xml)
-            os.rename(base + "_files", base) # TODO: check if dest folder exist
+            if base.endswith('_f'):
+                os.rename(dest, xml)
+                self.fix_xml(xml)
+            else:
+                os.remove(dest)
+            if os.path.isdir(base):
+                shutil.rmtree(base)
+            os.rename(tilesdir, base)
             pyramids.append(base)
             os.remove(face)
         self.salado_clean(pyramids)
     
     def salado_clean(self, pyramids):
-        
+        """keep only the highest level with a single tile. delete all others
+           
+        """
         for pyramid in pyramids:
             levels = {}
             for root, dirs, files in os.walk(pyramid):
@@ -168,10 +181,16 @@ class Panorama:
                 level_dir = "/".join((pyramid,str(level))) 
                 if not levels[level + 1] > 1 and os.path.isdir(level_dir):
                     shutil.rmtree(level_dir)
-                    print "delete " + level_dir
-        
-            
-            
+                    # print "delete " + level_dir
+
+    def fix_xml(self, dzxml):
+        wrong_atribute = "xmlns"
+        #dzxml = '/home/peter/tmp/dzi/opera/opera_l.xml'
+        docxml = xml.dom.minidom.parse(dzxml)
+        image = docxml.getElementsByTagName("Image")[0]
+        if image.hasAttribute(wrong_atribute):
+            image.removeAttribute(wrong_atribute)
+            docxml.writexml(open(dzxml,"w"))
 
 
 def _expand(d):
@@ -205,19 +224,13 @@ def main():
         parser.error("incorrect number of arguments")
     if options.verbose:
         print "reading %s..." % options.filename
-
     
     pano = Panorama(args[0])
-    #pano.extract(0, -25, -15, 75, None, 'zenit')
+    #print pano.extract(0, -25, -15, 75, None, 'zenit')
     #pano._make_cubic()
     print "size: ", pano.width, "x", pano.height 
     print "cube: ", pano.cubesize
     print "tile", pano.tilesize
-    
     pano.salado()
     
-    
-
-if __name__ == "__main__":
-    main()
     
