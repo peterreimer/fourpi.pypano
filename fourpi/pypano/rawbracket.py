@@ -1,6 +1,6 @@
 #!/usr/bin/env   python
 import os
-import xml.dom.minidom
+from xml.etree.ElementTree import ElementTree, SubElement
 import logging
 from optparse import OptionParser
 
@@ -14,11 +14,16 @@ logger.setLevel(logging.INFO)
 EXP = "Exposure"
 ufrawrc = os.path.expanduser("~/.ufrawrc")
 logger.info("reading %s" % (ufrawrc))
-ufrawxml = xml.dom.minidom.parse(ufrawrc)
-exposure = ufrawxml.getElementsByTagName(EXP)[0]
-ev = float(exposure.firstChild.data)
-exposure.firstChild.data = float(ev) + 0.5
-ufrawxml.writexml(open("ufraw-2.xml","w"))
+tree = ElementTree()
+tree.parse(ufrawrc)
+ufraw = tree.getroot()
+print ufraw.tag
+exposure = tree.find(EXP)
+if exposure is not None:
+    ev = float(exposure.text)
+else:
+    ev = 0.0
+    exposure = SubElement(ufraw, EXP)
 
 
 print ev
@@ -30,3 +35,9 @@ for n in [4, 5]:
     for i in range(n):
          exposures.append(round(lowest + i * e, 2))
     print exposures
+
+for exp in exposures:
+    c = "ufraw%+.2f.xml" % exp
+    exposure.text = str(exp)
+    tree.write(c)
+
