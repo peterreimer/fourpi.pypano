@@ -1,12 +1,7 @@
 #!/usr/bin/env   python
-import os
-<<<<<<< .mine
-import sys
+import os, sys
 import subprocess
 from xml.etree.ElementTree import ElementTree, SubElement, Element
-=======
-from xml.etree.ElementTree import ElementTree, SubElement
->>>>>>> .r47
 import logging
 from optparse import OptionParser
 from utils import get_or_create_path, whereis
@@ -19,22 +14,20 @@ logger.addHandler(hdlr)
 logger.setLevel(logging.INFO)
 
 EXP = "Exposure"
-<<<<<<< .mine
 UFRAW_BATCH = whereis('ufraw-batch')
-=======
+
 ufrawrc = os.path.expanduser("~/.ufrawrc")
 logger.info("reading %s" % (ufrawrc))
 tree = ElementTree()
 tree.parse(ufrawrc)
 ufraw = tree.getroot()
-print ufraw.tag
+
 exposure = tree.find(EXP)
 if exposure is not None:
     ev = float(exposure.text)
 else:
     ev = 0.0
     exposure = SubElement(ufraw, EXP)
->>>>>>> .r47
 
 def get_ufraw_conf(ufrawrc):
     
@@ -42,11 +35,8 @@ def get_ufraw_conf(ufrawrc):
     conf = ElementTree()
     conf.parse(ufrawrc)
     ufraw = conf.getroot()
-    #print ufraw.tag
     exposure = conf.find(EXP)
     en = conf.find("ExposureNorm")
-    print ufraw.getchildren()
-    print dir(en)
     if exposure is not None:
         ev = float(exposure.text)
     else:
@@ -63,7 +53,6 @@ def get_bracket_values(number, difference, exposure):
     exp_range = (float(number) - 1) * difference
     lowest = exposure - exp_range / 2
     exposures = []
-<<<<<<< .mine
     for i in range(number):
          exposures.append(round(lowest + i * difference, 2))
     return exposures
@@ -101,28 +90,12 @@ def main():
         dir_name = "eb%+.2f" % exp
         ufrawconf = "--conf=%s" % conf_filename 
         path = "--out-path=%s" % get_or_create_path(dir_name)
+        
         for image in images:
-            
             args = (UFRAW_BATCH, ufrawconf, path, image)
-            print ' '.join(args)
-            #develop = subprocess.Popen(args, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            #develop.communicate()
+            develop = subprocess.Popen(args, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            develop.communicate()
 
 if __name__ == "__main__":
     main()
 
-
-        
-        
-    
-=======
-    for i in range(n):
-         exposures.append(round(lowest + i * e, 2))
-    print exposures
-
-for exp in exposures:
-    c = "ufraw%+.2f.xml" % exp
-    exposure.text = str(exp)
-    tree.write(c)
-
->>>>>>> .r47
