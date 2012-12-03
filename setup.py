@@ -8,7 +8,7 @@ def read(fname):
 setup(name='fourpi.pypano',
       version='0.0.1',
       description="toolbox for creating, remapping and publishing panoramas",
-      long_description=read('README'),
+      long_description=read('README.md'),
       # Get more strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
       classifiers=[
         "Programming Language :: Python",
