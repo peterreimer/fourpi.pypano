@@ -4,11 +4,9 @@ import os
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
-__version__ = read('version.txt').strip()
-__author__ = "Peter Reimer"
 
 setup(name='fourpi.pypano',
-      version=__version__,
+      version='0.0.1',
       description="toolbox for creating, remapping and publishing panoramas",
       long_description=read('README'),
       # Get more strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
@@ -16,9 +14,9 @@ setup(name='fourpi.pypano',
         "Programming Language :: Python",
         ],
       keywords='',
-      author=__author__,
+      author='Peter Reimer',
       author_email='peter@4pi.org',
-      url='http://svn.4pi.org/',
+      url='https://github.com/peterreimer/fourpi.pypano',
       license='GPL',
       packages=find_packages(exclude=['ez_setup']),
       namespace_packages=['fourpi', 'fourpi.pypano'],
