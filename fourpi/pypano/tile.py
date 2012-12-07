@@ -151,7 +151,7 @@ class Panorama:
             tilesdir = base + "_files"
             creator = ImageCreator(tile_size=self.tilesize, tile_format="jpg",
                                    image_quality=0.80, resize_filter=None)
-            creator.create(face, dest)
+            creator.create(face, dest, discard_levels=True)
             msg = "Created Pyramid for %s" % face
             print msg
             #logger.info(msg)
@@ -165,23 +165,6 @@ class Panorama:
             os.rename(tilesdir, base)
             pyramids.append(base)
             os.remove(face)
-        self.salado_clean(pyramids)
-    
-    def salado_clean(self, pyramids):
-        """keep only the highest level with a single tile. delete all others
-           
-        """
-        for pyramid in pyramids:
-            levels = {}
-            for root, dirs, files in os.walk(pyramid):
-                if root is not pyramid:
-                    level = int(os.path.split(root)[-1])
-                    levels[level] = len(files) 
-            for level in range(len(levels) - 1):
-                level_dir = "/".join((pyramid,str(level))) 
-                if not levels[level + 1] > 1 and os.path.isdir(level_dir):
-                    shutil.rmtree(level_dir)
-                    # print "delete " + level_dir
 
     def fix_xml(self, dzxml):
         wrong_atribute = "xmlns"
