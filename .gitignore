@@ -2,3 +2,8 @@ dist
 *.egg-info
 *.pyc
 *.jpg
+
+# eclipse
+.project
+.pydevproject
+
