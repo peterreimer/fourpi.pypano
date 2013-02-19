@@ -32,7 +32,8 @@ setup(name='fourpi.pypano',
       entry_points={
           'console_scripts':[
             'tile=fourpi.pypano.tile:main',
-            'rawbracket=fourpi.pypano.rawbracket:main'
+            'pano=fourpi.pypano.pano:main',
+            'bracket=fourpi.pypano.bracket:main'
           ]  
       },
       )
