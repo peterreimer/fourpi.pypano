@@ -26,6 +26,7 @@ setup(name='fourpi.pypano',
       zip_safe=False,
       install_requires=[
           'setuptools',
+          'elementtree',
           'Pillow'
           # -*- Extra requirements: -*-
       ],
