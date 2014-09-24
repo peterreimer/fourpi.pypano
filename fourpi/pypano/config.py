@@ -18,13 +18,6 @@ def indent(elem, level=0):
         if level and (not elem.tail or not elem.tail.strip()):
             elem.tail = i
 
-
-class Panorama:
-
-    def __init__(self, id, direction=0, **kwargs):
-        pano =  ET.Element("panorama")
-
-
 class OpenPanoConfigurationMaker:
 
     def __init__(self, config_file, debug=False):
@@ -33,9 +26,8 @@ class OpenPanoConfigurationMaker:
         salado = tree.getroot()
         
         glob = salado.find('global')
-        glob.set('debug', str(debug)) 
+        glob.set('debug', str(debug).lower()) 
         if not debug:
-            print "delete ViewFinder"
             modules = salado.find('modules')
             viewfinder = modules.find('ViewFinder')
             if viewfinder:
@@ -62,7 +54,9 @@ class OpenPanoConfigurationMaker:
         pano_attributes = {}
         pano_attributes['id'] = pano_id  
         pano_attributes['path'] = path 
-        pano_attributes['view'] = self._make_view(pan, tilt, fov)
+        view = self._make_view(pan, tilt, fov)
+        if view:
+            pano_attributes['view'] = view 
         panoramas = salado.find('panoramas')
         panorama =  ET.SubElement(panoramas, "panorama", attrib=pano_attributes)
         
