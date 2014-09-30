@@ -20,11 +20,17 @@ def indent(elem, level=0):
 
 class OpenPanoConfigurationMaker:
 
-    def __init__(self, config_file, debug=False):
+    def __init__(self, config_file=None, debug=False):
         """bla"""
-        tree = ET.ElementTree(file=config_file)
-        salado = tree.getroot()
-        
+        if config_file:
+            tree = ET.ElementTree(file=config_file)
+            salado = tree.getroot()
+        else:
+            salado = ET.Element("SaladoPlayer")
+            panoramas = ET.SubElement(salado, "panoramas")
+            glob = ET.SubElement(salado, "global")
+            modules = ET.SubElement(salado, "modules")
+            
         glob = salado.find('global')
         glob.set('debug', str(debug).lower()) 
         if not debug:
@@ -33,6 +39,7 @@ class OpenPanoConfigurationMaker:
             if viewfinder:
                 modules.remove(viewfinder)
         self.salado = salado
+        
 
     def _make_view(self, pan, tilt, fov):
         
