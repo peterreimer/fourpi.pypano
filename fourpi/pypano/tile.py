@@ -12,8 +12,8 @@ import math
 import subprocess
 import shutil
 import xml.dom.minidom
+import argparse
 
-from optparse import OptionParser
 from deepzoom import ImageCreator
 
 PI = math.pi
@@ -193,24 +193,15 @@ def whereis(program):
     return None
         
 def main():
-    usage = "usage: %prog [options] arg"
-    parser = OptionParser(usage)
-    parser.add_option("-f", "--file", dest="filename",
-                      help="read data from FILENAME")
-    parser.add_option("-v", "--verbose",
-                      action="store_true", dest="verbose")
-    parser.add_option("-q", "--quiet",
-                      action="store_false", dest="verbose")
 
-    (options, args) = parser.parse_args()
-    if len(args) != 1:
-        parser.error("incorrect number of arguments")
-    if options.verbose:
-        print "reading %s..." % options.filename
-    
-    pano = Panorama(args[0])
-    #print pano.extract(0, -25, -15, 75, None, 'zenit')
-    #pano._make_cubic()
+    parser = argparse.ArgumentParser(description='Convert equirectangular panorama to six pyramids')
+    parser.add_argument('panorama', help='Panoramic image')
+    parser.add_argument("-v", "--verbose", action="store_true", help="be verbose")
+
+    args = parser.parse_args()
+    pano_file = args.panorama
+        
+    pano = Panorama(pano_file)
     print "size: ", pano.width, "x", pano.height 
     print "cube: ", pano.cubesize
     print "tile", pano.tilesize
