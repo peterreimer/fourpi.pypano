@@ -1,10 +1,6 @@
 #!/usr/bin/env python
 """tile - A Python script to produce cubic faces and tiles from panos """
 
-__version__ = (0, 0, 1)
-__author__ = "Peter Reimer <peter@4pi.org>"
-
-
 import PIL.Image
 import tempfile
 import os
@@ -40,6 +36,10 @@ class Panorama:
         self.src = src
         self.filename = os.path.split(self.src)[1]
         self.hfov = hfov
+        if quality < 0 or quality > 1:
+            logger.warn("Quality setting %s in invalid, using default %s" % (quality, DEFAULT_QUALITY))
+            quality = DEFAULT_QUALITY
+
         self.quality = quality
         self.width, self.height = self.image.size
         logger.info("size: %d x %d " % (self.width, self.height))
@@ -157,9 +157,8 @@ class Panorama:
             creator = ImageCreator(tile_size=self.tilesize, tile_format="jpg",
                                    image_quality=self.quality, resize_filter=None)
             creator.create(face, dest, discard_levels=True)
-            msg = "Created Pyramid for %s" % face
-            print msg
-            #logger.info(msg)
+            "Created Pyramid for %s" % face
+            logger.info("Created Pyramid for %s" % face)
             if base.endswith('_f'):
                 os.rename(dest, xml)
                 self.fix_xml(xml)
@@ -172,6 +171,9 @@ class Panorama:
             os.remove(face)
 
     def fix_xml(self, dzxml):
+        """the salado player can't deal with the xmlns attribute, for unknown reasons
+        ist expects the mistyped xmlsn. we just remove it"""
+        
         wrong_atribute = "xmlns"
         #dzxml = '/home/peter/tmp/dzi/opera/opera_l.xml'
         docxml = xml.dom.minidom.parse(dzxml)
@@ -207,8 +209,8 @@ def main():
     parser.add_argument("-v", "--verbose", action="store_true", help="be verbose")
 
     args = parser.parse_args()
-    print args    
     pano = Panorama(args.panorama, quality=args.quality)
+    
     pano.salado()
     
     
