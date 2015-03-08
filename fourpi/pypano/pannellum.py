@@ -2,6 +2,18 @@
 
 from __future__ import unicode_literals, print_function
 import json
+import logging
+import math
+from distutils.spawn import find_executable
+
+logger = logging.getLogger(__name__)
+
+EXIFTOOL = find_executable('exiftool')
+
+if EXIFTOOL:
+    print("exiftool found at %s" % EXIFTOOL)
+else:
+    logger.error("EXIFTOOL required but not found.")
 
 class Scene():
     def __init__(self, title):
@@ -10,20 +22,25 @@ class Scene():
 
 class Tour():
     
-    def __init__(self, firstScene, author):
+    def __init__(self, firstScene=None, author=None, panoramas=[]):
         self.conf = {}
         default = {}
         scenes = {}
-        default['author'] = author
+        if author:
+            default['author'] = author
         default['firstScene'] = firstScene
         self.conf['default'] = default
         self.conf['scenes'] = scenes
+        
+        for panorama in panoramas:
+            print(panorama)
 
-    def add_scene(self, scene_id, title):
+    def _add_scene(self, scene_id, title, yaw=0, pitch=0):
         """add multires panorama to tour"""
-        #scene = Scene()
         conf = {}
         conf['title'] = title
+        conf['yaw'] = yaw
+        conf['pitch'] = pitch
         conf['type'] = 'multires'
         conf['multires'] = {}
         conf['hotSpots'] = []
@@ -47,9 +64,11 @@ class Tour():
 
 
 if __name__ == '__main__':
-    
-    tour = Tour("dummy", "Peter Reimer")
-    tour.add_scene('laschozas', 'Mirador las Chozas')    
-    tour.add_hotspot('laschozas', 'ziel', 'Ziel')    
-    tour.add_hotspot('laschozas', 'ziel2', 'Ziel Zwei')    
+    panos = [
+        '/home/reimer/Development/4pi.org/content/tiles/gehry-bauten/gehry-bauten.jpg'
+    ]
+    tour = Tour("dummy", "Peter Reimer", panoramas=panos)
+    #tour._add_scene('laschozas', 'Mirador las Chozas')    
+    #tour.add_hotspot('laschozas', 'ziel', 'Ziel')    
+    #tour.add_hotspot('laschozas', 'ziel2', 'Ziel Zwei')    
     print(tour.get_json())
