@@ -1,4 +1,5 @@
 #!/usr/bin/env  python
+from __future__ import print_function
 import elementtree.ElementTree as ET
 
 def indent(elem, level=0):
@@ -51,16 +52,44 @@ class OpenPanoConfigurationMaker:
         if fov:
             view.append('fov:%.1f' % fov)
         return ','.join(view)
-    
+
+    def _make_location(self, pan, tilt, distance):
+        
+        location = []
+        if pan:
+            location.append('pan:%.1f' % pan)
+        if tilt:
+            location.append('tilt:%.1f' % tilt)
+        if distance:
+            location.append('distance:%.1f' % distance)
+        return ','.join(location)
+
+   
+    def add_hotspot(self, pano_id, hotspot_id, path, pan, target):
+        """add hotspots"""
+        salado = self.salado
+        parent = salado.find('panoramas')
+        panoramas = parent.findall('panorama')
+        for panorama in panoramas:
+            if panorama.get('id') == pano_id:
+                hotspot_attributes = {}
+                hotspot_attributes['id'] = hotspot_id 
+                hotspot_attributes['path'] = path
+                hotspot_attributes['target'] = target
+                hotspot_attributes['location'] = self._make_location(pan, 0, 400) 
+                image =  ET.SubElement(panorama, "image", attrib=hotspot_attributes)
+
+
     def add_panorama(self, pano_id, path, direction="0", **kwargs):
         """sfd"""
         salado = self.salado
-        pan = kwargs.get('pan', 0)
-        tilt = kwargs.get('tilt', 0)
+        pan = kwargs.get('pan', 0.0)
+        tilt = kwargs.get('tilt', 0.0)
         fov = kwargs.get('fov', 100)
         pano_attributes = {}
         pano_attributes['id'] = pano_id  
         pano_attributes['path'] = path 
+        pano_attributes['direction'] = str(direction) 
         view = self._make_view(pan, tilt, fov)
         if view:
             pano_attributes['view'] = view 
@@ -77,8 +106,16 @@ class OpenPanoConfigurationMaker:
 
 if __name__ == '__main__':
 
-
     conf = OpenPanoConfigurationMaker('salado.xml', debug=True)
+    #conf = OpenPanoConfigurationMaker()
     conf.add_panorama('zeughaus', 'pano/zeughaus_f.xml')
+    conf.add_panorama('dummy', 'pano/dummy_f.xml')
     conf.add_panorama('laschozas', 'pano/laschozas_f.xml', pan=123.4, tilt=15)
-    print conf.get_conf()
+    for pano_id in ('zeughaus','laschozas','dummy'):
+        for target_id in ('zeughaus','laschozas','dummy'):
+            if target_id is not pano_id:
+                hotspot_id = '%s-%s' % (pano_id, target_id)
+                path = "~tours/checker/_media/images/spots/arrow_blue.png"
+                conf.add_hotspot(pano_id, hotspot_id, path, 45, target_id)
+
+    print(conf.get_conf())
